@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Record both sides of a call: your microphone plus everything your computer plays.
 
-Usage: recorder.py <output.ogg|output.mp3>
+Usage: recorder.py <output.ogg|output.mp3> [--sides DIR]
 
 The format follows the file extension: .ogg is Opus, .mp3 is MP3.
 
@@ -11,7 +11,11 @@ switches between music and headset mode) the affected stream is rebuilt against
 the new default while the recording keeps running; the gap is filled with
 silence so both sides stay in sync. Send SIGINT or SIGTERM to finish the file
 cleanly.
+
+With --sides, each side is also saved on its own (DIR/me.flac, DIR/them.flac,
+16 kHz mono) so a transcript can tell who said what.
 """
+import os
 import signal
 import subprocess
 import sys
@@ -51,7 +55,7 @@ def default_device(kind):
 
 
 class Recorder:
-    def __init__(self, path):
+    def __init__(self, path, sides_dir=None):
         self.stopping = False
         self.branches = {}
         self.targets = {}
@@ -61,7 +65,18 @@ class Recorder:
         ext = path[path.rfind("."):].lower()
         if ext not in ENCODERS:
             raise SystemExit(f"unsupported format {ext!r}; use .ogg or .mp3")
+        self.sides_dir = sides_dir
+        side_chains = ""
+        if sides_dir:
+            for kind in SOURCES:
+                side_chains += (
+                    f"audiomixer name=side-{kind} latency=200000000 start-time-selection=first "
+                    "! audioconvert ! audioresample ! audio/x-raw,rate=16000,channels=1 "
+                    f"! flacenc ! filesink location=\"{os.path.join(sides_dir, kind + '.flac')}\" "
+                    f"audiotestsrc wave=silence is-live=true ! {RATE_CAPS} ! side-{kind}. "
+                )
         self.pipeline = Gst.parse_launch(
+            side_chains +
             "audiomixer name=mix latency=200000000 start-time-selection=first "
             "! audioconvert ! audio/x-raw,channels=1 "
             f"! {ENCODERS[ext]} "
@@ -118,31 +133,48 @@ class Recorder:
             log(f"[{kind}] no default device yet; waiting")
             self.retry(kind)
             return False
-        branch = Gst.parse_bin_from_description(
-            f"pipewiresrc name=src client-name=callrec-{kind} do-timestamp=true "
-            f"! audioconvert ! audioresample ! {RATE_CAPS} "
-            "! queue max-size-time=2000000000 leaky=downstream",
-            True,
-        )
+        queue = "queue max-size-time=2000000000 leaky=downstream"
+        desc = (f"pipewiresrc name=src client-name=callrec-{kind} do-timestamp=true "
+                f"! audioconvert ! audioresample ! {RATE_CAPS} ! tee name=t "
+                f"t. ! {queue} name=to-mix ")
+        if self.sides_dir:
+            desc += f"t. ! {queue} name=to-side "
+        branch = Gst.parse_bin_from_description(desc, False)
         branch.set_name(f"branch-{kind}")
         src = branch.get_by_name("src")
-        src.set_property("target-object", target)
-        src.set_property("stream-properties", Gst.Structure.new_from_string(SOURCES[kind]))
+        props = SOURCES[kind]
+        # A "<sink>.monitor" default input has no node of that name; capture the sink instead
+        if target.endswith(".monitor"):
+            src.set_property("target-object", target[:-len(".monitor")])
+            props += ",stream.capture.sink=true"
+        else:
+            src.set_property("target-object", target)
+        src.set_property("stream-properties", Gst.Structure.new_from_string(props))
         self.targets[kind] = target
         self.pipeline.add(branch)
-        sinkpad = self.mix.request_pad_simple("sink_%u")
-        branch.get_static_pad("src").link(sinkpad)
-        self.branches[kind] = (branch, sinkpad)
+        outputs = [("to-mix", self.mix)]
+        if self.sides_dir:
+            outputs.append(("to-side", self.pipeline.get_by_name(f"side-{kind}")))
+        links = []
+        for qname, mixer in outputs:
+            ghost = Gst.GhostPad.new(qname, branch.get_by_name(qname).get_static_pad("src"))
+            ghost.set_active(True)
+            branch.add_pad(ghost)
+            sinkpad = mixer.request_pad_simple("sink_%u")
+            ghost.link(sinkpad)
+            links.append((ghost, sinkpad, mixer))
+        self.branches[kind] = (branch, links)
         branch.sync_state_with_parent()
         log(f"[{kind}] capturing from {target}")
         return False
 
     def drop_branch(self, kind):
-        branch, sinkpad = self.branches.pop(kind, (None, None))
+        branch, links = self.branches.pop(kind, (None, None))
         if branch is None:
             return
-        branch.get_static_pad("src").unlink(sinkpad)
-        self.mix.release_request_pad(sinkpad)
+        for ghost, sinkpad, mixer in links:
+            ghost.unlink(sinkpad)
+            mixer.release_request_pad(sinkpad)
         branch.set_state(Gst.State.NULL)
         self.pipeline.remove(branch)
 
@@ -195,11 +227,17 @@ class Recorder:
 
 
 def main():
-    if len(sys.argv) != 2:
+    args = sys.argv[1:]
+    sides_dir = None
+    if len(args) == 3 and args[1] == "--sides":
+        sides_dir = args[2]
+        os.makedirs(sides_dir, exist_ok=True)
+        args = args[:1]
+    if len(args) != 1:
         print(__doc__, file=sys.stderr)
         return 2
     Gst.init(None)
-    return Recorder(sys.argv[1]).run()
+    return Recorder(args[0], sides_dir).run()
 
 
 if __name__ == "__main__":
