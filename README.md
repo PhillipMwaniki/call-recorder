@@ -21,16 +21,49 @@ and so on) and with earbuds, headphones or laptop speakers.
 Recordings are saved as `Call YYYY-MM-DD HH-MM-SS.ogg` (or `.mp3`) in
 `~/Recordings/Calls` by default.
 
-## Requirements
+## Prerequisites
 
-- Cinnamon 6.x
-- PipeWire (the default audio system on Linux Mint 22 and Ubuntu 24.04)
-- These packages, installed by default on Linux Mint 22:
+| Prerequisite | Why it's needed | How to check |
+| --- | --- | --- |
+| Cinnamon 6.x desktop | Runs the panel applet | `cinnamon --version` |
+| PipeWire audio system | Captures the mic and the audio you hear | `pactl info \| grep "Server Name"` should mention PipeWire |
+| Python 3 with GObject bindings | Runs the recorder | `python3 -c "import gi"` prints nothing |
+| GStreamer + PipeWire plugin | Audio capture, mixing, Opus encoding | `gst-inspect-1.0 pipewiresrc` and `gst-inspect-1.0 opusenc` show details |
+| GStreamer "good" plugins | MP3 encoding | `gst-inspect-1.0 lamemp3enc` shows details |
+| `pactl` | Detects default-device changes | `pactl --version` |
+
+Linux Mint 22 (Cinnamon) has all of these installed out of the box. On other
+Debian- or Ubuntu-based systems with Cinnamon and PipeWire, install anything
+missing with:
 
 ```sh
+sudo apt update
 sudo apt install python3-gi gir1.2-gstreamer-1.0 gstreamer1.0-pipewire \
     gstreamer1.0-plugins-base gstreamer1.0-plugins-good pulseaudio-utils
 ```
+
+Running it again when everything is present is harmless; `apt` just reports
+that the packages are already installed.
+
+To check everything at once, paste this into a terminal. It prints `all good`,
+or names what's missing and which package provides it:
+
+```sh
+ok=1
+python3 -c "import gi; gi.require_version('Gst', '1.0')" 2>/dev/null \
+  || { echo "missing: python3-gi / gir1.2-gstreamer-1.0"; ok=0; }
+command -v pactl >/dev/null || { echo "missing: pulseaudio-utils (pactl)"; ok=0; }
+for e in pipewiresrc:gstreamer1.0-pipewire audiomixer:gstreamer1.0-plugins-base \
+         opusenc:gstreamer1.0-plugins-base oggmux:gstreamer1.0-plugins-base \
+         lamemp3enc:gstreamer1.0-plugins-good xingmux:gstreamer1.0-plugins-good; do
+  gst-inspect-1.0 "${e%%:*}" >/dev/null 2>&1 || { echo "missing: ${e#*:} (${e%%:*})"; ok=0; }
+done
+[ "$ok" = 1 ] && echo "all good"
+```
+
+If your system still uses PulseAudio instead of PipeWire (`pactl info` shows
+`Server Name: pulseaudio`), the recorder won't work. PipeWire has been the
+default since Linux Mint 22 and Ubuntu 22.10.
 
 ## Installation
 
