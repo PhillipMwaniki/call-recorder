@@ -19,5 +19,33 @@
         "type": "switch",
         "default": true,
         "description": "Show elapsed time in the panel while recording"
+    },
+    "auto-transcribe": {
+        "type": "switch",
+        "default": true,
+        "description": "Transcribe calls automatically after recording",
+        "tooltip": "Runs whisper.cpp on this computer; nothing is uploaded. The transcript is saved next to the recording as a .txt file."
+    },
+    "transcript-language": {
+        "type": "combobox",
+        "default": "auto",
+        "description": "Spoken language",
+        "options": {
+            "Detect automatically": "auto",
+            "English": "en",
+            "Swahili": "sw"
+        },
+        "dependency": "auto-transcribe"
+    },
+    "transcript-model": {
+        "type": "combobox",
+        "default": "small",
+        "description": "Transcription model",
+        "options": {
+            "Base: fastest, less accurate (60 MB)": "base",
+            "Small: balanced (190 MB)": "small",
+            "Medium: most accurate, slow (540 MB)": "medium"
+        },
+        "tooltip": "Choosing a model you haven't downloaded yet shows \"Set up transcription\u2026\" in the menu."
     }
 }
