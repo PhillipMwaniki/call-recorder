@@ -3,7 +3,7 @@
 # No root needed; everything goes under ~/.local/share/call-recorder.
 #
 #   sh install-whisper.sh            # default model: small
-#   sh install-whisper.sh medium     # or: base, small, medium
+#   sh install-whisper.sh turbo      # or: base, small, medium, turbo, large
 set -eu
 
 WHISPER_TAG=v1.9.5
@@ -12,8 +12,8 @@ ROOT=${XDG_DATA_HOME:-$HOME/.local/share}/call-recorder
 SRC=$ROOT/whisper.cpp
 
 case "$MODEL" in
-    base|small|medium) ;;
-    *) echo "Unknown model '$MODEL'; use base, small or medium" >&2; exit 1 ;;
+    base|small|medium|turbo|large) ;;
+    *) echo "Unknown model '$MODEL'; use base, small, medium, turbo or large" >&2; exit 1 ;;
 esac
 
 for tool in git cmake make gcc g++ ffmpeg; do
@@ -36,6 +36,8 @@ case "$MODEL" in
     base)   FILE=ggml-base-q5_1.bin ;;
     small)  FILE=ggml-small-q5_1.bin ;;
     medium) FILE=ggml-medium-q5_0.bin ;;
+    turbo)  FILE=ggml-large-v3-turbo-q5_0.bin ;;
+    large)  FILE=ggml-large-v3-q5_0.bin ;;
 esac
 if [ ! -s "$ROOT/models/$FILE" ]; then
     echo "Downloading $FILE…"

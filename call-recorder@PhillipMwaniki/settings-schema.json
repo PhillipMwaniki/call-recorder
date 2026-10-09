@@ -42,10 +42,12 @@
         "default": "small",
         "description": "Transcription model",
         "options": {
-            "Base: fastest, less accurate (60 MB)": "base",
-            "Small: balanced (190 MB)": "small",
-            "Medium: most accurate, slow (540 MB)": "medium"
+            "Base: fastest, least accurate (60 MB)": "base",
+            "Small: fast, weak at Swahili (190 MB)": "small",
+            "Medium: about real time (540 MB)": "medium",
+            "Large v3 Turbo: best balance for Swahili, slower (575 MB)": "turbo",
+            "Large v3: most accurate, slowest (1.1 GB)": "large"
         },
-        "tooltip": "Choosing a model you haven't downloaded yet shows \"Set up transcription\u2026\" in the menu."
+        "tooltip": "Bigger models are much better at Swahili and mixed languages but take longer; transcription runs in the background either way. Choosing a model you haven't downloaded yet shows \"Set up transcription\u2026\" in the menu."
     }
 }

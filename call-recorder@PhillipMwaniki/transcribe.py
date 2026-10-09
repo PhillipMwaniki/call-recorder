@@ -2,7 +2,7 @@
 """Transcribe a call recording locally with whisper.cpp.
 
 Usage: transcribe.py <recording> [--sides DIR] [--language auto|en|sw|...]
-                     [--model base|small|medium] [--keep-sides]
+                     [--model base|small|medium|turbo|large] [--keep-sides]
 
 With --sides (the me.flac/them.flac tracks saved by recorder.py) the transcript
 labels who spoke: "Me" and "Them". Without it the mixed recording is
@@ -25,6 +25,8 @@ MODELS = {
     "base": "ggml-base-q5_1.bin",
     "small": "ggml-small-q5_1.bin",
     "medium": "ggml-medium-q5_0.bin",
+    "turbo": "ggml-large-v3-turbo-q5_0.bin",
+    "large": "ggml-large-v3-q5_0.bin",
 }
 VAD_MODEL = "ggml-silero-v5.1.2.bin"
 THREADS = max(1, min(6, (os.cpu_count() or 2) - 2))

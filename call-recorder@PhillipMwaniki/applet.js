@@ -12,7 +12,10 @@ const REC_ICON = "media-record-symbolic";
 const REC_STYLE = "color: #fd4663;";
 const DATA_DIR = GLib.build_filenamev([GLib.get_user_data_dir(), "call-recorder"]);
 const SIDES_ROOT = GLib.build_filenamev([GLib.get_user_cache_dir(), "call-recorder", "sides"]);
-const MODEL_FILES = { base: "ggml-base-q5_1.bin", small: "ggml-small-q5_1.bin", medium: "ggml-medium-q5_0.bin" };
+const MODEL_FILES = {
+    base: "ggml-base-q5_1.bin", small: "ggml-small-q5_1.bin", medium: "ggml-medium-q5_0.bin",
+    turbo: "ggml-large-v3-turbo-q5_0.bin", large: "ggml-large-v3-q5_0.bin",
+};
 
 function pad(n) {
     return n < 10 ? "0" + n : "" + n;
