@@ -1,0 +1,8 @@
+{
+    "uuid": "call-recorder@PhillipMwaniki",
+    "name": "Call Recorder",
+    "description": "One-click recording of both sides of a call: your microphone plus everything you hear. Follows your earbuds, headphones or speakers as they connect and switch.",
+    "version": "1.0.0",
+    "max-instances": 1,
+    "author": "PhillipMwaniki"
+}

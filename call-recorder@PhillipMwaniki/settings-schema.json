@@ -1,0 +1,23 @@
+{
+    "save-folder": {
+        "type": "filechooser",
+        "select-dir": true,
+        "default": "~/Recordings/Calls",
+        "description": "Save recordings in"
+    },
+    "format": {
+        "type": "combobox",
+        "default": "ogg",
+        "description": "Recording format",
+        "options": {
+            "Opus (.ogg): smaller files, best for voice": "ogg",
+            "MP3 (.mp3): plays on any device": "mp3"
+        },
+        "tooltip": "Opus uses about 30 MB per hour; MP3 (96 kbps) about 45 MB per hour."
+    },
+    "show-timer": {
+        "type": "switch",
+        "default": true,
+        "description": "Show elapsed time in the panel while recording"
+    }
+}
