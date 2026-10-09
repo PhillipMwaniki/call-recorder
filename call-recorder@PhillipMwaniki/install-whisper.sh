@@ -2,8 +2,8 @@
 # Builds whisper.cpp for local call transcription and downloads a model.
 # No root needed; everything goes under ~/.local/share/call-recorder.
 #
-#   sh tools/install-whisper.sh            # default model: small
-#   sh tools/install-whisper.sh medium     # or: base, small, medium
+#   sh install-whisper.sh            # default model: small
+#   sh install-whisper.sh medium     # or: base, small, medium
 set -eu
 
 WHISPER_TAG=v1.9.5

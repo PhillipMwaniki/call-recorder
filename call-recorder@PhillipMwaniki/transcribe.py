@@ -112,7 +112,7 @@ def main():
     model = os.path.join(DATA, "models", MODELS[args.model])
     for needed, hint in ((WHISPER, "whisper.cpp"), (model, f"the {args.model} model")):
         if not os.path.exists(needed):
-            log(f"Missing {hint}. Run: sh tools/install-whisper.sh {args.model}")
+            log(f"Missing {hint}. Run: sh install-whisper.sh {args.model} (in the applet folder), or use 'Set up transcription' in the applet menu")
             return 3
     if not os.path.exists(args.recording):
         log(f"No such recording: {args.recording}")
